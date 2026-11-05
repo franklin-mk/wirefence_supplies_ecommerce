@@ -8,29 +8,43 @@ type Mail = {
   attachments?: { filename: string; content: Buffer }[];
 };
 
-const from = () => process.env.EMAIL_FROM ?? "WireFence Supplies <no-reply@localhost>";
+const from = () => process.env.EMAIL_FROM ?? "WireFence Supplies <franklinmuriithi431@gmail.com>";
 
 export async function sendMail(mail: Mail) {
   if (process.env.EMAIL_PROVIDER === "smtp") {
+    const port = Number(process.env.SMTP_PORT ?? 587);
+    const isSecure = port === 465;
+
     const transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT ?? 465),
-      secure: Number(process.env.SMTP_PORT ?? 465) === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: port,
+      secure: isSecure, // true for port 465, false for port 587
+      requireTLS: !isSecure, // Forces STARTTLS on port 587 for cloud hosts
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS?.replace(/\s+/g, ""), // Automatically strips spaces from App Passwords
+      },
+      tls: {
+        rejectUnauthorized: false, // Prevents certificate verification drops inside containers
+      },
+      connectionTimeout: 15000, // 15-second connection timeout
     });
+
     await transport.sendMail({ from: from(), ...mail });
     return;
   }
+
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { error } = await resend.emails.send({ from: from(), ...mail });
   if (error) throw new Error(error.message);
 }
 
 export const otpEmail = (code: string, minutes: number) => `
-  <div style="font-family:system-ui,sans-serif;max-width:420px">
-    <h2>Admin sign-in code</h2>
-    <p style="font-size:32px;letter-spacing:6px;font-weight:700">${code}</p>
-    <p>This code expires in ${minutes} minutes. If you did not try to sign in, change your password now.</p>
+  <div style="font-family:system-ui,sans-serif;max-width:420px;padding:20px;border:1px solid #e2e8f0;border-radius:8px">
+    <h2 style="color:#15803d;margin-top:0">Admin Sign-In Code</h2>
+    <p>Use the 6-digit code below to finish signing into WireFence Admin:</p>
+    <p style="font-size:32px;letter-spacing:6px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:12px;text-align:center;border-radius:6px;margin:16px 0">${code}</p>
+    <p style="font-size:14px;color:#64748b">This code expires in ${minutes} minutes. If you did not request this code, ignore this email.</p>
   </div>`;
 
 export interface SendOrderReceiptEmailOptions {
