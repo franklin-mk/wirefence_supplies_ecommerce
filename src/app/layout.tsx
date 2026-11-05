@@ -11,6 +11,11 @@ const storeName = process.env.NEXT_PUBLIC_STORE_NAME ?? "WireFence Supplies";
 export const metadata: Metadata = {
   title: { default: `${storeName} | Wire, mesh & fencing posts`, template: `%s | ${storeName}` },
   description: "Barbed wire, chain link, weld mesh, gate wire and fencing posts delivered across Kenya.",
+  icons: {
+    icon: "/images/barbed-wire_2294516.png",
+    shortcut: "/images/barbed-wire_2294516.png",
+    apple: "/images/barbed-wire_2294516.png",
+  },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };

@@ -1,3 +1,4 @@
+//src/app/login/page.tsx
 import { AuthForm } from "@/components/auth-form";
 
 export default function LoginPage({ searchParams }: { searchParams: { next?: string } }) {

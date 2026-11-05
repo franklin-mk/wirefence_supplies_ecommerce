@@ -1,3 +1,4 @@
+//src/components/auth-form.tsx
 "use client";
 import { useState } from "react";
 import Link from "next/link";
@@ -60,7 +61,7 @@ export function AuthForm({ mode, next }: { mode: "login" | "register"; next: str
         {msg && <p className={`text-sm ${msg.type === "error" ? "text-danger" : "text-success"}`}>{msg.text}</p>}
         <button className="btn-primary w-full" disabled={busy}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}</button>
       </form>
-      <button onClick={google} className="btn-outline w-full">Continue with Google</button>
+      <button type="button" onClick={google} className="btn-outline w-full">Continue with Google</button>
       <div className="flex justify-between text-sm">
         {mode === "login" ? (
           <>

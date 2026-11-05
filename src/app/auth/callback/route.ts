@@ -1,16 +1,33 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-/** Handles email-verification links, OAuth returns and password-reset links. */
-export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/";
-  const safe = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+export async function GET(request: Request) {
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const next = requestUrl.searchParams.get("next") ?? "/";
 
   if (code) {
-    const { error } = await createClient().auth.exchangeCodeForSession(code);
-    if (error) return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, url.origin));
+    const supabase = await createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error) {
+      // Determine public domain on Render reverse proxy
+      const forwardedHost = request.headers.get("x-forwarded-host");
+      const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+
+      let siteOrigin = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+      if (!siteOrigin) {
+        siteOrigin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : requestUrl.origin;
+      }
+
+      // Ensure origin doesn't end with a trailing slash
+      siteOrigin = siteOrigin.replace(/\/$/, "");
+
+      const target = next.startsWith("/") ? next : `/${next}`;
+      return NextResponse.redirect(`${siteOrigin}${target}`);
+    }
   }
-  return NextResponse.redirect(new URL(safe, url.origin));
+
+  const fallbackOrigin = (process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin).replace(/\/$/, "");
+  return NextResponse.redirect(`${fallbackOrigin}/login?error=auth_failed`);
 }
