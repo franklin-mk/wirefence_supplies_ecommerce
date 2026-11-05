@@ -1,3 +1,4 @@
+//src/app/api/admin/otp/verify/route.ts
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/guards";
 import { createAdminClient } from "@/lib/supabase/server";
